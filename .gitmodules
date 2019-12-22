@@ -1,0 +1,3 @@
+[submodule "mmpy"]
+	path = mmpy
+	url = https://github.com/daringer/mmpy.git

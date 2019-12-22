@@ -9,15 +9,15 @@ def load_config(config_path):
         sys.exit(1)
     cfg = yaml.safe_load(open(config_path))
 
-    if "file_destination" not in cfg:
-        print("you must set 'file_destintion' to a writable path (dir), exiting...")
-        sys.exit(1)
+   #if "file_destination" not in cfg:
+   #    print("you must set 'file_destintion' to a writable path (dir), exiting...")
+   #    sys.exit(1)
 
-    if not os.path.exists(cfg["file_destination"]) \
-      or not os.path.isdir(cfg["file_destination"]):
-        print ("your 'file_destination' is not existing or not r/w/x + (dir)")
-        # @todo: writeable check missing...
-        sys.exit(1)
+   #if not os.path.exists(cfg["file_destination"]) \
+   #  or not os.path.isdir(cfg["file_destination"]):
+   #    print ("your 'file_destination' is not existing or not r/w/x + (dir)")
+   #    # @todo: writeable check missing...
+   #    sys.exit(1)
 
     if not "secret_key" in cfg:
         print ("'secret_key' missing in configuration, exiting...")
@@ -28,6 +28,8 @@ def load_config(config_path):
         sys.exit(1)
 
     return cfg
+
+
 
 
 def save_config(cfg, config_path):
