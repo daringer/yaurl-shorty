@@ -8,6 +8,9 @@ import mimetypes
 from flask import Flask, render_template, request, flash, redirect, Response, url_for, send_file
 from flask import Blueprint, jsonify
 
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 from werkzeug.utils import secure_filename
 
 from urllib.parse import quote, urlparse, urlencode
@@ -37,6 +40,11 @@ URL_PREFIX = cfg.get("url_prefix", "/")
 app = Flask(__name__)
 app.secret_key = cfg["secret_key"]
 
+limiter = Limiter(app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
+
 ####
 #### utils
 ####
@@ -49,11 +57,9 @@ class Short(dict):
         if self.ttl == -1:
             return td(years=100)
         return td(seconds=(self.created + self.ttl) - now())
-
     @property
     def inactive(self):
         return self.active_for < td(0)
-
     @property
     def info(self):
         return {
@@ -89,31 +95,6 @@ def my_load_config(config_path=YAML_CFG_PATH, obj=None):
         return cfg, cfg["shorts"]
     else:
         return cfg, cfg["shorts"], (obj and cfg["shorts"].get(obj, None))
-
-def make_pass(pwd):
-    return pwd
-
-def check_auth_global(username, password):
-    return username == cfg["user"] and cfg["pwd"] == make_pass(password)
-
-#def check_auth_shared(share, username, password):
-#   return username == cfg["user"] and cfg["pwd"] == make_pass(password)
-
-def http_authenticate():
-    return Response("No access!", 401, {
-        "WWW-Authenticate": 'Basic realm="Login Required"'}
-    )
-
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth_global(auth.username, auth.password):
-            return http_authenticate()
-        return f(*args, **kwargs)
-    return decorated
-requires_zone_auth = requires_auth
-
 ####
 #### endpoints
 ####
@@ -122,7 +103,6 @@ rest = get_rest_decorator(app)
 forbidden_shorts = {"gen", "unlink", "shorts", "list", "prune", "own", "del"}
 
 @rest.get("/<string:short>/gen/<path:url>")
-@requires_auth
 def create_with_short(url, ttl=DEFAULT_TTL, short=None):
     return create(url, ttl, short)
 
@@ -168,29 +148,6 @@ def create(url, ttl=DEFAULT_TTL, short=None):
     return jsonify(state="fail", url=url,
                    msg=f"cannot gen short: '{short}' (already taken...)")
 
-@rest.get("/list")
-@requires_auth
-def show_list():
-    cfg, shorts = my_load_config()
-    out = []
-    for short, obj in sorted(shorts.items()):
-        out.append(obj.info)
-    return jsonify(out)
-
-@rest.get("/<string:short>/del")
-@requires_auth
-def remove(short):
-    cfg, shorts, obj = my_load_config(obj=short)
-    if obj is None:
-        return jsonify({"state": "fail",
-                        "msg": "short: {short} not in database"})
-
-    out = dict(obj.info)
-    del shorts[short]
-    out["state"] = "ok (deleted)"
-    my_save_config(cfg)
-    return out
-
 @rest.get("/<string:short>")
 def goto(short):
     cfg, shorts, obj = my_load_config(obj=short)
@@ -201,23 +158,6 @@ def goto(short):
         return jsonify({"state": "fail", "msg": "short is inactive!"})
 
     return redirect(obj.url)
-
-# @TODO, @FIXME: NOT deleting right now...
-@rest.get("/prune")
-def prune():
-    out = []
-    cfg, shorts = my_load_config()
-    for short, obj in shorts.items():
-        if obj is None:
-            out.append({"state": "fail", "short": short,
-                        "msg": "short: {short} not in db"})
-        if obj.inactive:
-            out.append({"state": "inactive", "short": short,
-                        "msg": "not usable anymore"})
-
-    if len(out) == 0:
-        out = {"state": "ok", "msg": "all done, no issues"}
-    return jsonify(out)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5005, debug=True)
