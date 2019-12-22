@@ -1,0 +1,7 @@
+url_prefix: /
+secret_key: fjeoijewjofwe
+
+## temporary
+
+user: test
+password: test
