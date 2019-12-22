@@ -1,8 +1,8 @@
 # yaurl-shorty
 Yet Another URL Shortener (REST API, yaml database, rate limited)
 
-Obviously github has more than enough of these.
-Nevertheless, distinctive features:
+As plain as possible, still ready for the wild wild web. Obviously github 
+has more than enough of these. Nevertheless, at least some distinctive features:
 
 * REST API
 
