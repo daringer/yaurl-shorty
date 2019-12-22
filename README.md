@@ -6,9 +6,11 @@ Nevertheless, distinctive features:
 
 * REST API
 
-  * get auto-created short-url: /gen/<long-url-starting-with-http>
-	* choose any short-url: /<wish-short>/gen/<long-url-starting-with-http>
-	* translate to long-url: /<short>
+	* get auto-created short-url: /gen/[long-url-starting-with-http]
+	
+	* choose any short-url: /[wish-short]/gen/[long-url-starting-with-http]
+	
+	* translate to long-url: /[short]
 
 * backend database is a yaml-file
 
