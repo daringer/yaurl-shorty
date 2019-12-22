@@ -183,8 +183,8 @@ def create(url, ttl=DEFAULT_TTL, short=None):
 def goto(short):
     cfg, shorts, obj = my_load_config(obj=short)
     if obj is None:
-        return jsonify({"state": "fail",
-                        "msg": f"short: '{short}' not in database"})
+        #return jsonify({"state": "fail",
+        #                "msg": f"short: '{short}' not in database"})
         abort(404)
 
     #if obj.inactive:
